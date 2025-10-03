@@ -1,3 +1,11 @@
 [gd_scene format=3 uid="uid://by1q6un7dxqu6"]
 
 [node name="main" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 800.0
+offset_bottom = 599.0
+color = Color(0.0638384, 0.916449, 0.0539281, 1)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(403, 300)

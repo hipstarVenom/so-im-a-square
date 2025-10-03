@@ -13,3 +13,13 @@ config_version=5
 config/name="So I am A Square So What?"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=800
+window/size/viewport_height=600
+window/size/resizable=false
+
+[rendering]
+
+viewport/hdr_2d=true
