@@ -20,3 +20,5 @@ A comically dark, arena-style roguelike where a lone Square battles through 20 b
 4. Prove your edges… and die gloriously.
 
 ---
+
+Assets Credits : https://rgsdev.itch.io/hand-drawn-square-characters-animated-8-directions-top-down-free-cc0
