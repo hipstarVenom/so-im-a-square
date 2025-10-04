@@ -1,7 +1,8 @@
-[gd_scene load_steps=45 format=3 uid="uid://cmihqqysnk21k"]
+[gd_scene load_steps=46 format=3 uid="uid://cmihqqysnk21k"]
 
 [ext_resource type="Texture2D" uid="uid://qr4goguxuf3m" path="res://Assets/Spritesheets/hero.png" id="1_67a6e"]
 [ext_resource type="Script" uid="uid://4apjupuxarol" path="res://Code/Player/player.gd" id="1_yic5t"]
+[ext_resource type="PackedScene" uid="uid://dr160ebgdjwh1" path="res://Scene/gun/gun.tscn" id="3_uuj77"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2udht"]
 atlas = ExtResource("1_67a6e")
@@ -343,6 +344,21 @@ radius = 23.0217
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 script = ExtResource("1_yic5t")
+gun_scene = ExtResource("3_uuj77")
+
+[node name="down" type="Marker2D" parent="CharacterBody2D"]
+position = Vector2(0, 36)
+
+[node name="left" type="Marker2D" parent="CharacterBody2D"]
+position = Vector2(-32, 0)
+
+[node name="right" type="Marker2D" parent="CharacterBody2D"]
+position = Vector2(39, -1)
+
+[node name="up" type="Marker2D" parent="CharacterBody2D"]
+position = Vector2(0, -41)
+
+[node name="center" type="Marker2D" parent="CharacterBody2D"]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
 position = Vector2(-68, -64)

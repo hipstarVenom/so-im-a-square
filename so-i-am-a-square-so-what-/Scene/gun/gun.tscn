@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://dr160ebgdjwh1"]
+
+[ext_resource type="Texture2D" uid="uid://dqkmpp5bk7upe" path="res://Assets/Sprites/gun.png" id="1_8bwpe"]
+[ext_resource type="Script" uid="uid://dndboax1g42e8" path="res://Code/Gun/gun.gd" id="2_7cppd"]
+[ext_resource type="PackedScene" uid="uid://c4lhxntjjcqy3" path="res://Scene/gun/bullet.tscn" id="3_5hbiu"]
+
+[node name="gun" type="Node2D"]
+script = ExtResource("2_7cppd")
+bullet = ExtResource("3_5hbiu")
+
+[node name="gun" type="Sprite2D" parent="."]
+position = Vector2(-4.76837e-07, 0)
+scale = Vector2(0.929688, 0.820313)
+texture = ExtResource("1_8bwpe")
+
+[node name="origin" type="Marker2D" parent="."]
+position = Vector2(28, 0)
+scale = Vector2(0.929688, 0.820313)
