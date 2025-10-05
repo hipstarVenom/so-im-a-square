@@ -1,18 +1,11 @@
-extends Node2D  # Gun is Node2D
-
-@export var bullet: PackedScene
-@onready var origin: Node2D = $origin
+extends Node2D
+@export var bullet_scene: PackedScene
+@onready var muzzle: Node2D = $origin  
 
 func shoot(direction: Vector2):
-	if not bullet:
+	if not bullet_scene:
 		return
-
-	var bullet_instance = bullet.instantiate() as Area2D
-	get_parent().add_child(bullet_instance)
-
-	# Spawn at gun origin
-	bullet_instance.global_position = origin.global_position
-
-	# Set bullet direction
-	if bullet_instance.has_method("set_direction"):
-		bullet_instance.set_direction(direction)
+	var bullet = bullet_scene.instantiate()
+	get_tree().current_scene.add_child(bullet)  # add bullet to world
+	bullet.global_position = muzzle.global_position if muzzle else global_position
+	bullet.direction = direction.normalized()

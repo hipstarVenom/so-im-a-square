@@ -11,7 +11,7 @@ var gun_instance: Node2D
 @onready var marker_down: Node2D = $down
 @onready var marker_left: Node2D = $left
 @onready var marker_right: Node2D = $right
-@onready var marker_center: Node2D = $center  # optional for horizontal centering
+@onready var marker_center: Node2D = $center  # optional for centering
 
 func _ready():
 	if gun_scene:
@@ -22,7 +22,7 @@ func _ready():
 func _physics_process(delta: float) -> void:
 	velocity = Vector2.ZERO
 
-	# Input direction
+	# Movement input
 	if Input.is_action_pressed("ui_right"):
 		velocity.x += 1
 	if Input.is_action_pressed("ui_left"):
@@ -46,6 +46,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("shoot"):
 		if gun_instance and gun_instance.has_method("shoot"):
 			gun_instance.shoot(last_dir)
+			
 
 # -----------------------------
 # Gun Positioning & Rotation
@@ -75,6 +76,7 @@ func _update_gun_position():
 	# Rotate gun naturally based on movement direction
 	if dir.length() > threshold:
 		gun_instance.rotation = dir.angle()  # radians, clockwise from +X
+
 
 # -----------------------------
 # Animation Helpers

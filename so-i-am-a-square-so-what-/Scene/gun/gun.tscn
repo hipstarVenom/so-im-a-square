@@ -6,7 +6,7 @@
 
 [node name="gun" type="Node2D"]
 script = ExtResource("2_7cppd")
-bullet = ExtResource("3_5hbiu")
+bullet_scene = ExtResource("3_5hbiu")
 
 [node name="gun" type="Sprite2D" parent="."]
 position = Vector2(-4.76837e-07, 0)
