@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dndboax1g42e8" path="res://Code/Gun/gun.gd" id="2_7cppd"]
 [ext_resource type="PackedScene" uid="uid://c4lhxntjjcqy3" path="res://Scene/gun/bullet.tscn" id="3_5hbiu"]
 
-[node name="gun" type="Node2D"]
+[node name="gun" type="Node2D" groups=["player"]]
 script = ExtResource("2_7cppd")
 bullet_scene = ExtResource("3_5hbiu")
 

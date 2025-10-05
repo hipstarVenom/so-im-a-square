@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://by1q6un7dxqu6"]
+[gd_scene load_steps=3 format=3 uid="uid://by1q6un7dxqu6"]
 
 [ext_resource type="PackedScene" uid="uid://cmihqqysnk21k" path="res://Scene/Player/player.tscn" id="1_ajaps"]
+[ext_resource type="PackedScene" uid="uid://4v13saxa1w3l" path="res://Scene/Monster/monster.tscn" id="2_c5csi"]
 
 [node name="main" type="Node2D"]
 
@@ -10,6 +11,10 @@ offset_bottom = 599.0
 color = Color(0.0638384, 0.916449, 0.0539281, 1)
 
 [node name="player" parent="." instance=ExtResource("1_ajaps")]
+position = Vector2(117, 133)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(403, 300)
+
+[node name="monster" parent="." instance=ExtResource("2_c5csi")]
+position = Vector2(543, 320)
