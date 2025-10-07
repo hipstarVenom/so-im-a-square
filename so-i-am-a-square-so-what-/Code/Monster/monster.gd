@@ -103,5 +103,5 @@ func die():
 		$CollisionShape2D.disabled = true
 
 	anim.play("death")
-	await get_tree().create_timer(2.0).timeout  # wait for 2 seconds
+	await get_tree().create_timer(1.0).timeout  # wait for 1 seconds
 	queue_free()
