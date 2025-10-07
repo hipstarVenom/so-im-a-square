@@ -12,6 +12,10 @@ var gun_instance: Node2D
 @onready var marker_left: Node2D = $left
 @onready var marker_right: Node2D = $right
 
+# Shooting cooldown
+var can_shoot := true
+var shoot_cooldown := 0.5  # 0.5 second delay
+
 func _ready():
 	if gun_scene:
 		gun_instance = gun_scene.instantiate() as Node2D
@@ -43,10 +47,19 @@ func _physics_process(delta: float) -> void:
 	var mouse_dir = (get_global_mouse_position() - global_position).normalized()
 	_update_gun_position(mouse_dir)
 
-	# Shooting
-	if Input.is_action_just_pressed("shoot"):
+	# Shooting with cooldown
+	if Input.is_action_just_pressed("shoot") and can_shoot:
 		if gun_instance and gun_instance.has_method("shoot"):
 			gun_instance.shoot(mouse_dir)
+			_start_shoot_cooldown()
+
+# -----------------------------
+# Shooting cooldown helper
+# -----------------------------
+func _start_shoot_cooldown():
+	can_shoot = false
+	await get_tree().create_timer(shoot_cooldown).timeout
+	can_shoot = true
 
 # -----------------------------
 # Gun Positioning & Rotation
@@ -55,10 +68,8 @@ func _update_gun_position(dir: Vector2):
 	if not gun_instance:
 		return
 	
-	# Use a threshold to determine directions (including diagonals)
 	var threshold = 0.5
 	
-	# Check for cardinal directions first
 	if abs(dir.x) < threshold and dir.y < -threshold:  # Up
 		gun_instance.position = marker_up.position
 	elif abs(dir.x) < threshold and dir.y > threshold:  # Down
@@ -67,7 +78,6 @@ func _update_gun_position(dir: Vector2):
 		gun_instance.position = marker_left.position
 	elif dir.x > threshold and abs(dir.y) < threshold:  # Right
 		gun_instance.position = marker_right.position
-	# Now handle diagonals
 	elif dir.x < -threshold and dir.y < -threshold:  # Up-left
 		gun_instance.position = marker_left.position
 	elif dir.x > threshold and dir.y < -threshold:  # Up-right
@@ -77,70 +87,61 @@ func _update_gun_position(dir: Vector2):
 	elif dir.x > threshold and dir.y > threshold:  # Down-right
 		gun_instance.position = marker_right.position
 
-	# Rotate gun based on direction
 	gun_instance.rotation = dir.angle()
 
 # -----------------------------
 # Animation Helpers
 # -----------------------------
 func _play_move_animation(dir: Vector2) -> void:
-	# Use a threshold to determine which animation to play
 	var threshold = 0.5
-	
-	# Check for cardinal directions first
-	if abs(dir.x) < threshold and dir.y < -threshold:  # Up
+	if abs(dir.x) < threshold and dir.y < -threshold:
 		anim.play("move_up")
 		anim.flip_h = false
-	elif abs(dir.x) < threshold and dir.y > threshold:  # Down
+	elif abs(dir.x) < threshold and dir.y > threshold:
 		anim.play("move_down")
 		anim.flip_h = false
-	elif dir.x < -threshold and abs(dir.y) < threshold:  # Left
+	elif dir.x < -threshold and abs(dir.y) < threshold:
 		anim.play("move_right")
 		anim.flip_h = true
-	elif dir.x > threshold and abs(dir.y) < threshold:  # Right
+	elif dir.x > threshold and abs(dir.y) < threshold:
 		anim.play("move_right")
 		anim.flip_h = false
-	# Now handle diagonals
-	elif dir.x < -threshold and dir.y < -threshold:  # Up-left
+	elif dir.x < -threshold and dir.y < -threshold:
 		anim.play("move_right")
 		anim.flip_h = true
-	elif dir.x > threshold and dir.y < -threshold:  # Up-right
+	elif dir.x > threshold and dir.y < -threshold:
 		anim.play("move_right")
 		anim.flip_h = false
-	elif dir.x < -threshold and dir.y > threshold:  # Down-left
+	elif dir.x < -threshold and dir.y > threshold:
 		anim.play("move_right")
 		anim.flip_h = true
-	elif dir.x > threshold and dir.y > threshold:  # Down-right
+	elif dir.x > threshold and dir.y > threshold:
 		anim.play("move_right")
 		anim.flip_h = false
 
 func _play_idle_animation(dir: Vector2) -> void:
-	# Use the same logic as move animation but with idle animations
 	var threshold = 0.5
-	
-	# Check for cardinal directions first
-	if abs(dir.x) < threshold and dir.y < -threshold:  # Up
+	if abs(dir.x) < threshold and dir.y < -threshold:
 		anim.play("idle_up")
 		anim.flip_h = false
-	elif abs(dir.x) < threshold and dir.y > threshold:  # Down
+	elif abs(dir.x) < threshold and dir.y > threshold:
 		anim.play("idle_down")
 		anim.flip_h = false
-	elif dir.x < -threshold and abs(dir.y) < threshold:  # Left
+	elif dir.x < -threshold and abs(dir.y) < threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = true
-	elif dir.x > threshold and abs(dir.y) < threshold:  # Right
+	elif dir.x > threshold and abs(dir.y) < threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = false
-	# Now handle diagonals
-	elif dir.x < -threshold and dir.y < -threshold:  # Up-left
+	elif dir.x < -threshold and dir.y < -threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = true
-	elif dir.x > threshold and dir.y < -threshold:  # Up-right
+	elif dir.x > threshold and dir.y < -threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = false
-	elif dir.x < -threshold and dir.y > threshold:  # Down-left
+	elif dir.x < -threshold and dir.y > threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = true
-	elif dir.x > threshold and dir.y > threshold:  # Down-right
+	elif dir.x > threshold and dir.y > threshold:
 		anim.play("idle_left_right")
 		anim.flip_h = false
