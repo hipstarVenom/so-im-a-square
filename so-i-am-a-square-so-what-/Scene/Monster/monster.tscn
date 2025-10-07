@@ -1,7 +1,7 @@
 [gd_scene load_steps=32 format=3 uid="uid://4v13saxa1w3l"]
 
 [ext_resource type="Texture2D" uid="uid://bl55dgdgx0qaa" path="res://Assets/Spritesheets/monster.png" id="1_g35ut"]
-[ext_resource type="Script" uid="uid://dt3yu2bax5loc" path="res://code/Monster/monster.gd" id="1_klg5d"]
+[ext_resource type="Script" uid="uid://dt3yu2bax5loc" path="res://Code/Monster/monster.gd" id="1_klg5d"]
 [ext_resource type="Texture2D" uid="uid://tk20by6ps0rx" path="res://Assets/Spritesheets/deathFX.png" id="2_2mx60"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cjfyd"]
@@ -312,11 +312,10 @@ radius = 24.3311
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 script = ExtResource("1_klg5d")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D" groups=["enemy"]]
 sprite_frames = SubResource("SpriteFrames_y5qvb")
-animation = &"death"
-frame = 5
-frame_progress = 1.0
+animation = &"idle_left_right"
+frame_progress = 0.281711
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D" groups=["enemy"]]
 shape = SubResource("CircleShape2D_g35ut")

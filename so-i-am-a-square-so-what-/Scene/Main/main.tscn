@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://by1q6un7dxqu6"]
+[gd_scene load_steps=4 format=3 uid="uid://by1q6un7dxqu6"]
 
 [ext_resource type="PackedScene" uid="uid://cmihqqysnk21k" path="res://Scene/Player/player.tscn" id="1_ajaps"]
 [ext_resource type="PackedScene" uid="uid://4v13saxa1w3l" path="res://Scene/Monster/monster.tscn" id="2_c5csi"]
+[ext_resource type="PackedScene" uid="uid://dss6vkjmncff3" path="res://Scene/skeleton/skeleton.tscn" id="3_pw3jx"]
 
 [node name="main" type="Node2D"]
 
@@ -18,3 +19,6 @@ position = Vector2(403, 300)
 
 [node name="monster" parent="." instance=ExtResource("2_c5csi")]
 position = Vector2(543, 320)
+
+[node name="skeleton" parent="." instance=ExtResource("3_pw3jx")]
+position = Vector2(503, 182)
