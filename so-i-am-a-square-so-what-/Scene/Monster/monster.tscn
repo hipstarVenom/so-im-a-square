@@ -314,8 +314,7 @@ script = ExtResource("1_klg5d")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D" groups=["enemy"]]
 sprite_frames = SubResource("SpriteFrames_y5qvb")
-animation = &"idle_left_right"
-frame_progress = 0.281711
+animation = &"idle_up_right"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D" groups=["enemy"]]
 shape = SubResource("CircleShape2D_g35ut")

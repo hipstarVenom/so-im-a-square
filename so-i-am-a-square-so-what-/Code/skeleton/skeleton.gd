@@ -5,7 +5,7 @@ extends CharacterBody2D
 @export var max_health := 50
 var health := max_health
 
-# For direction testing
+# Directions for 8-way movement
 var directions := [
 	Vector2.RIGHT,
 	Vector2.LEFT,
@@ -28,6 +28,7 @@ func _ready():
 func _physics_process(delta):
 	time_accum += delta
 
+	# Switch direction or idle
 	if time_accum > switch_time:
 		time_accum = 0.0
 		moving = !moving
@@ -49,19 +50,27 @@ func _physics_process(delta):
 func set_move_anim(dir: Vector2):
 	var name := get_anim_name(dir, "move")
 	anim.play(name)
+	apply_flip(dir)
 
 func set_idle_anim(dir: Vector2):
 	var name := get_anim_name(dir, "idle")
 	anim.play(name)
+	apply_flip(dir)
 
+# Apply horizontal flip for animations that can face left
+func apply_flip(dir: Vector2):
+	var flip_needed := false
+	if anim.animation.ends_with("_left_right") or anim.animation.ends_with("_up_right") or anim.animation.ends_with("_down_right"):
+		flip_needed = dir.x < 0
+	anim.flip_h = flip_needed
+
+# Determine animation name
 func get_anim_name(dir: Vector2, action: String) -> String:
-	if dir.x > 0.5 and abs(dir.y) < 0.5:
+	if abs(dir.x) > 0.5 and abs(dir.y) < 0.5:
 		return "%s_left_right" % action
-	elif dir.x < -0.5 and abs(dir.y) < 0.5:
-		return "%s_left_right" % action
-	elif dir.y < -0.5 and abs(dir.x) < 0.5:
+	elif abs(dir.x) < 0.5 and dir.y < -0.5:
 		return "%s_up" % action
-	elif dir.y > 0.5 and abs(dir.x) < 0.5:
+	elif abs(dir.x) < 0.5 and dir.y > 0.5:
 		return "%s_down" % action
 	elif dir.x > 0 and dir.y < 0:
 		return "%s_up_right" % action
@@ -94,6 +103,5 @@ func die():
 		$CollisionShape2D.disabled = true
 
 	anim.play("death")
-
-	await get_tree().create_timer(1.0).timeout  # wait for 1 seconds
+	await get_tree().create_timer(2.0).timeout  # wait for 2 seconds
 	queue_free()
