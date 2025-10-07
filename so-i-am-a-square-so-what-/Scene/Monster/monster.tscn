@@ -307,7 +307,7 @@ animations = [{
 [sub_resource type="CircleShape2D" id="CircleShape2D_g35ut"]
 radius = 24.3311
 
-[node name="monster" type="Node2D"]
+[node name="monster" type="Node2D" groups=["enemy"]]
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 script = ExtResource("1_klg5d")

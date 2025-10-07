@@ -66,11 +66,11 @@ func get_anim_name(dir: Vector2, action: String) -> String:
 	elif dir.x > 0 and dir.y < 0:
 		return "%s_up_right" % action
 	elif dir.x < 0 and dir.y < 0:
-		return "%s_up_left" % action
+		return "%s_up_right" % action
 	elif dir.x > 0 and dir.y > 0:
 		return "%s_down_right" % action
 	elif dir.x < 0 and dir.y > 0:
-		return "%s_down_left" % action
+		return "%s_down_right" % action
 	else:
 		return "%s_down" % action
 
