@@ -94,10 +94,10 @@ func _play_move_animation(dir: Vector2):
 		anim.play("move_down")
 		anim.flip_h = false
 	elif dir.x > threshold and abs(dir.y) < threshold:
-		anim.play("move_left_right")
+		anim.play("move_right")
 		anim.flip_h = false
 	elif dir.x < -threshold and abs(dir.y) < threshold:
-		anim.play("move_left_right")
+		anim.play("move_right")
 		anim.flip_h = true
 	elif dir.x > threshold and dir.y < -threshold:
 		anim.play("move_up_right")

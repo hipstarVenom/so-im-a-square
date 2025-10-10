@@ -363,7 +363,7 @@ position = Vector2(0, -41)
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
 position = Vector2(-68, -64)
 sprite_frames = SubResource("SpriteFrames_a1qst")
-animation = &"move_down_right"
+animation = &"move_right"
 centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
