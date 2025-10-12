@@ -1,48 +1,41 @@
 extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-@export var speed := 500
+@export var speed := 100
 @export var max_health := 50
 var health := max_health
 
-# Directions for 8-way movement
-var directions := [
-	Vector2.RIGHT,
-	Vector2.LEFT,
-	Vector2.UP,
-	Vector2.DOWN,
-	Vector2(1, -1),   # up-right
-	Vector2(-1, -1),  # up-left
-	Vector2(1, 1),    # down-right
-	Vector2(-1, 1)    # down-left
-]
-var current_dir_index := 0
-var time_accum := 0.0
-var switch_time := 1.5
-var moving := true
+var player_body: CharacterBody2D = null
 
 func _ready():
-	add_to_group("enemy")
+	var player_root = get_tree().get_root().find_child("player", true, false)
+	if player_root:
+		# Find the first CharacterBody2D inside Player
+		for child in player_root.get_children():
+			if child is CharacterBody2D:
+				player_body = child
+				break
+	
+	if not player_body:
+		push_warning("⚠️ Could not find CharacterBody2D inside Player node!")
+
+	
 	set_idle_anim(Vector2.DOWN)
 
 func _physics_process(delta):
-	time_accum += delta
+	if not player_body:
+		return
 
-	# Switch direction or idle
-	if time_accum > switch_time:
-		time_accum = 0.0
-		moving = !moving
-		if not moving:
-			set_idle_anim(directions[current_dir_index])
-		else:
-			current_dir_index = (current_dir_index + 1) % directions.size()
-			set_move_anim(directions[current_dir_index])
+	# Get direction to player's CharacterBody2D
+	var direction = (player_body.global_position - global_position).normalized()
+	velocity = direction * speed
+	move_and_slide()
 
-	if moving:
-		velocity = directions[current_dir_index].normalized() * speed * delta * 10
-		move_and_slide()
+	# Animate according to movement
+	if velocity.length() > 0.1:
+		set_move_anim(direction)
 	else:
-		velocity = Vector2.ZERO
+		set_idle_anim(direction)
 
 # ======================
 # Animation helpers
@@ -57,14 +50,9 @@ func set_idle_anim(dir: Vector2):
 	anim.play(name)
 	apply_flip(dir)
 
-# Apply horizontal flip for animations that can face left
 func apply_flip(dir: Vector2):
-	var flip_needed := false
-	if anim.animation.ends_with("_left_right") or anim.animation.ends_with("_up_right") or anim.animation.ends_with("_down_right"):
-		flip_needed = dir.x < 0
-	anim.flip_h = flip_needed
+	anim.flip_h = dir.x < 0
 
-# Determine animation name
 func get_anim_name(dir: Vector2, action: String) -> String:
 	if abs(dir.x) > 0.5 and abs(dir.y) < 0.5:
 		return "%s_left_right" % action
@@ -72,28 +60,19 @@ func get_anim_name(dir: Vector2, action: String) -> String:
 		return "%s_up" % action
 	elif abs(dir.x) < 0.5 and dir.y > 0.5:
 		return "%s_down" % action
-	elif dir.x > 0 and dir.y < 0:
+	elif dir.y < 0:
 		return "%s_up_right" % action
-	elif dir.x < 0 and dir.y < 0:
-		return "%s_up_right" % action
-	elif dir.x > 0 and dir.y > 0:
-		return "%s_down_right" % action
-	elif dir.x < 0 and dir.y > 0:
-		return "%s_down_right" % action
 	else:
-		return "%s_down" % action
+		return "%s_down_right" % action
 
 # ======================
-# Damage system
+# Damage and death
 # ======================
 func take_damage(amount: int):
 	health -= amount
 	if health <= 0:
 		die()
 
-# ======================
-# Death with 2-second delay
-# ======================
 func die():
 	set_physics_process(false)
 	set_process(false)
@@ -103,5 +82,5 @@ func die():
 		$CollisionShape2D.disabled = true
 
 	anim.play("death")
-	await get_tree().create_timer(1.0).timeout  # wait for 1 seconds
+	await get_tree().create_timer(1.0).timeout
 	queue_free()
