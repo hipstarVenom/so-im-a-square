@@ -22,7 +22,7 @@ func _ready():
 		gun_instance = gun_scene.instantiate() as Node2D
 		add_child(gun_instance)
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	velocity = Vector2.ZERO
 
 	# Movement input

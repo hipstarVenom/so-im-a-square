@@ -7,6 +7,7 @@ var health := max_health
 
 var player_body: CharacterBody2D = null
 
+
 func _ready():
 	var player_root = get_tree().get_root().find_child("player", true, false)
 	if player_root:
@@ -22,7 +23,7 @@ func _ready():
 	
 	set_idle_anim(Vector2.DOWN)
 
-func _physics_process(delta):
+func _physics_process(_delta):
 	if not player_body:
 		return
 
@@ -41,13 +42,13 @@ func _physics_process(delta):
 # Animation helpers
 # ======================
 func set_move_anim(dir: Vector2):
-	var name := get_anim_name(dir, "move")
-	anim.play(name)
+	var anim_name := get_anim_name(dir, "move")
+	anim.play(anim_name)
 	apply_flip(dir)
 
 func set_idle_anim(dir: Vector2):
-	var name := get_anim_name(dir, "idle")
-	anim.play(name)
+	var anim_name := get_anim_name(dir, "idle")
+	anim.play(anim_name)
 	apply_flip(dir)
 
 func apply_flip(dir: Vector2):
@@ -79,8 +80,8 @@ func die():
 	velocity = Vector2.ZERO
 
 	if has_node("CollisionShape2D"):
-		$CollisionShape2D.disabled = true
+		$CollisionShape2D.set_deferred("disabled", true)  
 
 	anim.play("death")
 	await get_tree().create_timer(1.0).timeout
-	queue_free()
+	call_deferred("queue_free")  

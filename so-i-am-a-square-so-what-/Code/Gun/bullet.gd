@@ -27,7 +27,7 @@ func _physics_process(delta: float):
 	if direction != Vector2.ZERO:
 		position += direction * speed * delta
 
-func _on_area_entered(area: Area2D):
+func _on_area_entered(_area: Area2D):
 	# Handle collision with other areas (like shields or triggers)
 	queue_free()
 
