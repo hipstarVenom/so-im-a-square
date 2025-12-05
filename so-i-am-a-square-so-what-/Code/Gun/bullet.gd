@@ -1,46 +1,51 @@
 extends Area2D
 
-@export var speed := 500
+@export var speed := 700
+@export var lifetime := 1.0
+@export var knockback_force := 120      # Knockback strength
 var direction: Vector2 = Vector2.ZERO
-@export var lifetime := 5.0  # Bullet lifetime in seconds
 
 func set_direction(dir: Vector2):
 	direction = dir.normalized()
 
 func _ready():
-	# Connect signals safely (prevents duplicate connection errors)
+	# Connect collision signals once
 	if not is_connected("area_entered", Callable(self, "_on_area_entered")):
 		connect("area_entered", Callable(self, "_on_area_entered"))
 	if not is_connected("body_entered", Callable(self, "_on_body_entered")):
 		connect("body_entered", Callable(self, "_on_body_entered"))
 
-	# Lifetime timer to remove the bullet automatically
-	var timer := Timer.new()
-	timer.wait_time = lifetime
-	timer.one_shot = true
-	timer.timeout.connect(_on_lifetime_end)
-	add_child(timer)
-	timer.start()
+	# Auto-despawn timer
+	var t := Timer.new()
+	t.wait_time = lifetime
+	t.one_shot = true
+	t.timeout.connect(queue_free)
+	add_child(t)
+	t.start()
 
 func _physics_process(delta: float):
-	# Move bullet continuously
 	if direction != Vector2.ZERO:
-		position += direction * speed * delta
+		global_position += direction * speed * delta
 
 func _on_area_entered(_area: Area2D):
-	# Handle collision with other areas (like shields or triggers)
 	queue_free()
 
 func _on_body_entered(body: Node2D):
-	# Ignore hitting the player who fired this bullet (if tagged)
-	if body.is_in_group("player") or body.is_in_group("enemy"):
-		# Example: you could deal damage here instead of freeing the body
+	# Ignore player
+	if body.is_in_group("player"):
+		return
+
+	# Enemy hit
+	if body.is_in_group("enemy"):
 		if body.has_method("take_damage"):
 			body.take_damage(10)
-		queue_free()
-	else:
-		# For walls or other objects
-		queue_free()
 
-func _on_lifetime_end():
+		# Apply knockback if the enemy supports it
+		if body.has_method("apply_knockback"):
+			body.apply_knockback(direction * knockback_force)
+
+		queue_free()
+		return
+
+	# Walls / props
 	queue_free()

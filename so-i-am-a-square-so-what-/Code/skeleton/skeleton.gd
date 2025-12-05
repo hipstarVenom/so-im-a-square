@@ -1,53 +1,102 @@
 extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-@export var speed := 100
+
+@export var speed := 120
 @export var max_health := 50
-var health := max_health
+var health := 0
 
 var player_body: CharacterBody2D = null
 
-func _ready():
-	var player_root = get_tree().get_root().find_child("player", true, false)
-	if player_root:
-		# Find the first CharacterBody2D inside Player
-		for child in player_root.get_children():
-			if child is CharacterBody2D:
-				player_body = child
-				break
-	
-	if not player_body:
-		push_warning("⚠️ Could not find CharacterBody2D inside Player node!")
+# Movement pause when close to player
+var is_moving := true
+var pause_timer := 0.0
+var pause_duration := 0.4
 
-	
+# Knockback system
+var knockback := Vector2.ZERO
+var knockback_decay := 14.0
+
+
+func _ready():
+	# Health must be set AFTER spawner difficulty scaling
+	health = max_health
+
+	# Locate player
+	var root = get_tree().root.find_child("player", true, false)
+	if root:
+		for c in root.get_children():
+			if c is CharacterBody2D:
+				player_body = c
+				break
+
 	set_idle_anim(Vector2.DOWN)
 
-func _physics_process(_delta):
+
+func _physics_process(delta):
 	if not player_body:
 		return
 
-	# Get direction to player's CharacterBody2D
+	# Apply knockback first
+	if knockback.length() > 1:
+		velocity = knockback
+		knockback = knockback.move_toward(Vector2.ZERO, knockback_decay)
+		move_and_slide()
+		return
+
+	# Pause behavior
+	if not is_moving:
+		pause_timer -= delta
+		if pause_timer <= 0:
+			is_moving = true
+		return
+
 	var direction = (player_body.global_position - global_position).normalized()
+	var distance = global_position.distance_to(player_body.global_position)
+	var stopping_distance := 20.0
+
+	if distance <= stopping_distance:
+		velocity = Vector2.ZERO
+		is_moving = false
+		pause_timer = pause_duration
+		set_idle_anim(direction)
+		return
+
+	# Chase player
 	velocity = direction * speed
 	move_and_slide()
 
-	# Animate according to movement
 	if velocity.length() > 0.1:
 		set_move_anim(direction)
 	else:
 		set_idle_anim(direction)
 
-# ======================
-# Animation helpers
-# ======================
+
+# Knockback (called by bullet)
+func apply_knockback(force: Vector2):
+	knockback = force
+
+
+# ==========================================================
+#   UNIVERSAL DIFFICULTY SCALING FUNCTION (Spawner uses this)
+# ==========================================================
+func apply_difficulty(speed_bonus: float, hp_bonus: float):
+	speed += speed_bonus
+	max_health += hp_bonus
+	health = max_health
+
+
+# ==========================================================
+#   Animation helpers
+# ==========================================================
 func set_move_anim(dir: Vector2):
-	var anim_name := get_anim_name(dir, "move")
-	anim.play(anim_name)
+	var name = get_anim_name(dir, "move")
+	anim.play(name)
 	apply_flip(dir)
 
 func set_idle_anim(dir: Vector2):
-	var anim_name := get_anim_name(dir, "idle")
-	anim.play(anim_name)
+	var name = get_anim_name(dir, "idle")
+	anim.play(name)
 	apply_flip(dir)
 
 func apply_flip(dir: Vector2):
@@ -65,9 +114,10 @@ func get_anim_name(dir: Vector2, action: String) -> String:
 	else:
 		return "%s_down_right" % action
 
-# ======================
-# Damage and death
-# ======================
+
+# ==========================================================
+#   Damage and Death
+# ==========================================================
 func take_damage(amount: int):
 	health -= amount
 	if health <= 0:
@@ -79,8 +129,8 @@ func die():
 	velocity = Vector2.ZERO
 
 	if has_node("CollisionShape2D"):
-		$CollisionShape2D.set_deferred("disabled", true)  
+		$CollisionShape2D.set_deferred("disabled", true)
 
 	anim.play("death")
-	await get_tree().create_timer(1.0).timeout
-	call_deferred("queue_free")  
+	await get_tree().create_timer(0.9).timeout
+	queue_free()

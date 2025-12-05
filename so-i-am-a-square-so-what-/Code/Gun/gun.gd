@@ -1,23 +1,25 @@
 extends Node2D
 
 @export var bullet_scene: PackedScene
-@onready var muzzle: Node2D = $origin  
+@onready var muzzle: Node2D = $origin
 
 func shoot(direction: Vector2):
 	if not bullet_scene:
 		push_warning("No bullet scene assigned to gun")
 		return
-	
+
+	# Spawn bullet
 	var bullet = bullet_scene.instantiate()
-	
-	# Add bullet to the current scene
-	get_parent().get_parent().add_child(bullet)
-	
-	# Set bullet position and direction
+
+	# Add to main scene (recommended for projectiles)
+	var world = get_tree().current_scene
+	world.add_child(bullet)
+
+	# Position bullet at muzzle
 	bullet.global_position = muzzle.global_position if muzzle else global_position
-	
-	# Make sure the bullet has the set_direction method
+
+	# Set direction if supported
 	if bullet.has_method("set_direction"):
 		bullet.set_direction(direction.normalized())
 	else:
-		push_warning("Bullet scene doesn't have set_direction method")
+		push_warning("Bullet scene missing set_direction() method")

@@ -9,10 +9,10 @@ radius = 9.0
 [node name="Area2D" type="Area2D"]
 script = ExtResource("1_w13t7")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_w13t7")
-
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_ssavk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_w13t7")
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]

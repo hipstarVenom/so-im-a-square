@@ -1,60 +1,143 @@
 extends Node2D
 
-# Assign your monster scenes
 @export var monster_scene_1: PackedScene
 @export var monster_scene_2: PackedScene
-
-# Reference to player node
 @export var player: Node2D
 
-# Spawn intervals
-@export var spawn_interval_1: float = 15.0
-@export var spawn_interval_2: float = 30.0
+@export var base_spawn_interval := 2.0
+@export var min_spawn_interval := 0.4
+@export var spawn_interval_reduce_rate := 0.02
 
-# Margin from edges
-@export var edge_margin: float = 50.0  # pixels from edges
-@export var player_safe_distance: float = 100.0  # pixels away from player
+@export var enemy_speed_increase := 2.0
+@export var enemy_hp_increase := 1.0
 
-var timer1: Timer
-var timer2: Timer
+@export var group_size_start := 1
+@export var group_size_max := 5
+
+@export var spawn_distance_from_screen := 40.0
+@export var player_safe_distance := 150.0
+
+var current_spawn_interval := 0.0
+var difficulty_timer := 0.0
+
+var timer: Timer
+
 
 func _ready():
-	# Timer for monster 1
-	timer1 = Timer.new()
-	timer1.wait_time = spawn_interval_1
-	timer1.one_shot = false
-	timer1.autostart = true
-	add_child(timer1)
-	timer1.timeout.connect(Callable(self, "_spawn_monster_1"))
-	
-	# Timer for monster 2
-	timer2 = Timer.new()
-	timer2.wait_time = spawn_interval_2
-	timer2.one_shot = false
-	timer2.autostart = true
-	add_child(timer2)
-	timer2.timeout.connect(Callable(self, "_spawn_monster_2"))
+	current_spawn_interval = base_spawn_interval
 
-func _spawn_monster_1():
-	_spawn_monster(monster_scene_1)
+	timer = Timer.new()
+	timer.one_shot = false
+	timer.wait_time = current_spawn_interval
+	timer.autostart = true
+	add_child(timer)
+	timer.timeout.connect(_spawn_group)
 
-func _spawn_monster_2():
-	_spawn_monster(monster_scene_2)
 
-func _spawn_monster(monster_scene: PackedScene):
-	var monster_instance = monster_scene.instantiate()
-	var viewport_size = get_viewport_rect().size
-	
-	var spawn_position = Vector2.ZERO
-	var tries = 0
-	# Keep trying random positions until it is far enough from player
-	while tries < 50:
-		var x = randf_range(edge_margin, viewport_size.x - edge_margin)
-		var y = randf_range(edge_margin, viewport_size.y - edge_margin)
-		spawn_position = Vector2(x, y)
-		if player == null or spawn_position.distance_to(player.position) >= player_safe_distance:
-			break
-		tries += 1
-	
-	monster_instance.position = spawn_position
-	get_parent().add_child(monster_instance)
+func _process(delta):
+	difficulty_timer += delta
+
+	current_spawn_interval = max(
+		min_spawn_interval,
+		base_spawn_interval - difficulty_timer * spawn_interval_reduce_rate
+	)
+
+	timer.wait_time = current_spawn_interval
+
+
+func _spawn_group():
+	var group_size = clamp(
+		group_size_start + int(difficulty_timer / 8),
+		group_size_start,
+		group_size_max
+	)
+
+	for i in range(group_size):
+		_spawn_single_enemy()
+
+
+func _spawn_single_enemy():
+	var scene = pick_random_scene()
+	if scene == null:
+		return
+
+	var enemy = scene.instantiate()
+	enemy.global_position = pick_spawn_position()
+
+	# Use apply_difficulty() if enemy supports it
+	if enemy.has_method("apply_difficulty"):
+		enemy.apply_difficulty(
+			difficulty_timer * enemy_speed_increase,
+			int(difficulty_timer * enemy_hp_increase)
+		)
+
+	get_tree().current_scene.add_child(enemy)
+
+
+func pick_random_scene() -> PackedScene:
+	return monster_scene_1 if randf() < 0.5 else monster_scene_2
+
+
+func pick_spawn_position() -> Vector2:
+	var rect = get_viewport().get_visible_rect()
+	var mode = randi() % 3
+
+	match mode:
+		0:
+			return spawn_in_corners(rect)
+		1:
+			return spawn_on_edges(rect)
+		2:
+			return spawn_off_screen(rect)
+
+	return Vector2.ZERO
+
+
+func spawn_in_corners(rect: Rect2) -> Vector2:
+	var corners = [
+		rect.position,
+		rect.position + Vector2(rect.size.x, 0),
+		rect.position + Vector2(0, rect.size.y),
+		rect.position + rect.size
+	]
+	return corners.pick_random()
+
+
+func spawn_on_edges(rect: Rect2) -> Vector2:
+	var side = randi() % 4
+
+	match side:
+		0:
+			return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x), rect.position.y)
+		1:
+			return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x),
+				rect.position.y + rect.size.y)
+		2:
+			return Vector2(rect.position.x,
+				randf_range(rect.position.y, rect.position.y + rect.size.y))
+		3:
+			return Vector2(rect.position.x + rect.size.x,
+				randf_range(rect.position.y, rect.position.y + rect.size.y))
+
+	return Vector2.ZERO
+
+
+func spawn_off_screen(rect: Rect2) -> Vector2:
+	var side = randi() % 4
+	var offset = spawn_distance_from_screen
+
+	match side:
+		0:
+			return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x),
+				rect.position.y - offset)
+		1:
+			return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x),
+				rect.position.y + rect.size.y + offset)
+		2:
+			return Vector2(rect.position.x - offset,
+				randf_range(rect.position.y, rect.position.y + rect.size.y))
+		3:
+			return Vector2(rect.position.x + rect.size.x + offset,
+				randf_range(rect.position.y, rect.position.y + rect.size.y))
+
+	return Vector2.ZERO

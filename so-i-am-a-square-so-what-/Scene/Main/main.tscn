@@ -7,8 +7,8 @@
 
 [node name="main" type="Node2D" node_paths=PackedStringArray("player")]
 script = ExtResource("1_m5fuk")
-monster_scene_1 = ExtResource("3_pw3jx")
-monster_scene_2 = ExtResource("2_c5csi")
+monster_scene_1 = ExtResource("2_c5csi")
+monster_scene_2 = ExtResource("3_pw3jx")
 player = NodePath("player")
 
 [node name="ColorRect" type="ColorRect" parent="."]
