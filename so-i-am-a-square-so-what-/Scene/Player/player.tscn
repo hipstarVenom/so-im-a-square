@@ -368,3 +368,5 @@ centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("CircleShape2D_67a6e")
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]

@@ -3,69 +3,69 @@ extends CharacterBody2D
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @export var gun_scene: PackedScene
 
-# Fast-paced movement
+# Movement
 var speed := 320
 var last_move_dir := Vector2.DOWN
-var gun_instance: Node2D
 
-# Gun markers
+# Gun
+var gun_instance: Node2D
 @onready var marker_up: Node2D = $up
 @onready var marker_down: Node2D = $down
 @onready var marker_left: Node2D = $left
 @onready var marker_right: Node2D = $right
 
-# Fast shooting
+# Shooting
 var can_shoot := true
-var shoot_cooldown := 0.10   # Fast shooting
+var shoot_cooldown := 0.10
+
 
 func _ready():
 	if gun_scene:
-		gun_instance = gun_scene.instantiate() as Node2D
+		gun_instance = gun_scene.instantiate()
 		add_child(gun_instance)
 
-func _physics_process(_delta: float) -> void:
+
+func _physics_process(delta: float) -> void:
+	_process_movement()
+	_process_aiming()
+	_process_shooting()
+
+
+# ---------------------------------------------------------
+# MOVEMENT
+# ---------------------------------------------------------
+func _process_movement():
 	velocity = Vector2.ZERO
 
-	# Movement input
-	if Input.is_action_pressed("ui_right"): velocity.x += 1
-	if Input.is_action_pressed("ui_left"):  velocity.x -= 1
-	if Input.is_action_pressed("ui_down"): velocity.y += 1
-	if Input.is_action_pressed("ui_up"):   velocity.y -= 1
+	if Input.is_action_pressed("ui_right"):
+		velocity.x += 1
+	if Input.is_action_pressed("ui_left"):
+		velocity.x -= 1
+	if Input.is_action_pressed("ui_down"):
+		velocity.y += 1
+	if Input.is_action_pressed("ui_up"):
+		velocity.y -= 1
 
 	if velocity != Vector2.ZERO:
 		velocity = velocity.normalized() * speed
-		_play_move_animation(velocity)
 		last_move_dir = velocity.normalized()
+		_play_move_animation(last_move_dir)
 	else:
 		_play_idle_animation(last_move_dir)
 
 	move_and_slide()
 
-	# Aim toward mouse
-	var mouse_dir = (get_global_mouse_position() - global_position).normalized()
-	_update_gun_position(mouse_dir)
 
-	# Shooting
-	if Input.is_action_pressed("shoot") and can_shoot:
-		if gun_instance and gun_instance.has_method("shoot"):
-			gun_instance.shoot(mouse_dir)
-			_start_shoot_cooldown()
-
-# -----------------------------
-# Shooting cooldown
-# -----------------------------
-func _start_shoot_cooldown():
-	can_shoot = false
-	await get_tree().create_timer(shoot_cooldown).timeout
-	can_shoot = true
-
-# -----------------------------
-# 4-Direction Gun Positioning
-# -----------------------------
-func _update_gun_position(dir: Vector2):
+# ---------------------------------------------------------
+# AIMING
+# ---------------------------------------------------------
+func _process_aiming():
 	if not gun_instance:
 		return
 
+	var dir := (get_global_mouse_position() - global_position).normalized()
+
+	# pick horizontal/vertical marker
 	if abs(dir.x) > abs(dir.y):
 		gun_instance.position = marker_right.position if dir.x > 0 else marker_left.position
 	else:
@@ -73,45 +73,65 @@ func _update_gun_position(dir: Vector2):
 
 	gun_instance.rotation = dir.angle()
 
-# -----------------------------
-# 8-Direction Animations
-# -----------------------------
-func _play_move_animation(dir: Vector2):
-	var threshold = 0.5
 
-	if abs(dir.x) < threshold and dir.y < -threshold:
-		anim.play("move_up"); anim.flip_h = false
-	elif abs(dir.x) < threshold and dir.y > threshold:
-		anim.play("move_down"); anim.flip_h = false
-	elif dir.x > threshold and abs(dir.y) < threshold:
-		anim.play("move_right"); anim.flip_h = false
-	elif dir.x < -threshold and abs(dir.y) < threshold:
-		anim.play("move_right"); anim.flip_h = true
-	elif dir.x > threshold and dir.y < -threshold:
-		anim.play("move_up_right"); anim.flip_h = false
-	elif dir.x < -threshold and dir.y < -threshold:
-		anim.play("move_up_right"); anim.flip_h = true
-	elif dir.x > threshold and dir.y > threshold:
-		anim.play("move_down_right"); anim.flip_h = false
-	elif dir.x < -threshold and dir.y > threshold:
-		anim.play("move_down_right"); anim.flip_h = true
+# ---------------------------------------------------------
+# SHOOTING
+# ---------------------------------------------------------
+func _process_shooting():
+	if can_shoot and Input.is_action_pressed("shoot") and gun_instance:
+		var mouse_dir := (get_global_mouse_position() - global_position).normalized()
+		gun_instance.shoot(mouse_dir)
+		_start_shoot_cooldown()
+
+
+func _start_shoot_cooldown():
+	can_shoot = false
+	await get_tree().create_timer(shoot_cooldown).timeout
+	can_shoot = true
+
+
+# ---------------------------------------------------------
+# ANIMATIONS (optimized)
+# ---------------------------------------------------------
+func _play_move_animation(dir: Vector2):
+	anim.flip_h = dir.x < 0
+	var t := 0.5
+
+	if abs(dir.x) < t and dir.y < -t:
+		anim.play("move_up")
+	elif abs(dir.x) < t and dir.y > t:
+		anim.play("move_down")
+	elif dir.x > t and abs(dir.y) < t:
+		anim.play("move_right")
+	elif dir.x < -t and abs(dir.y) < t:
+		anim.play("move_right")  # flip makes it left
+	elif dir.x > t and dir.y < -t:
+		anim.play("move_up_right")
+	elif dir.x < -t and dir.y < -t:
+		anim.play("move_up_right")
+	elif dir.x > t and dir.y > t:
+		anim.play("move_down_right")
+	elif dir.x < -t and dir.y > t:
+		anim.play("move_down_right")
+
 
 func _play_idle_animation(dir: Vector2):
-	var threshold = 0.5
+	anim.flip_h = dir.x < 0
+	var t := 0.5
 
-	if abs(dir.x) < threshold and dir.y < -threshold:
-		anim.play("idle_up"); anim.flip_h = false
-	elif abs(dir.x) < threshold and dir.y > threshold:
-		anim.play("idle_down"); anim.flip_h = false
-	elif dir.x > threshold and abs(dir.y) < threshold:
-		anim.play("idle_left_right"); anim.flip_h = false
-	elif dir.x < -threshold and abs(dir.y) < threshold:
-		anim.play("idle_left_right"); anim.flip_h = true
-	elif dir.x > threshold and dir.y < -threshold:
-		anim.play("idle_up_right"); anim.flip_h = false
-	elif dir.x < -threshold and dir.y < -threshold:
-		anim.play("idle_up_right"); anim.flip_h = true
-	elif dir.x > threshold and dir.y > threshold:
-		anim.play("idle_down_right"); anim.flip_h = false
-	elif dir.x < -threshold and dir.y > threshold:
-		anim.play("idle_down_right"); anim.flip_h = true
+	if abs(dir.x) < t and dir.y < -t:
+		anim.play("idle_up")
+	elif abs(dir.x) < t and dir.y > t:
+		anim.play("idle_down")
+	elif dir.x > t and abs(dir.y) < t:
+		anim.play("idle_left_right")
+	elif dir.x < -t and abs(dir.y) < t:
+		anim.play("idle_left_right")
+	elif dir.x > t and dir.y < -t:
+		anim.play("idle_up_right")
+	elif dir.x < -t and dir.y < -t:
+		anim.play("idle_up_right")
+	elif dir.x > t and dir.y > t:
+		anim.play("idle_down_right")
+	elif dir.x < -t and dir.y > t:
+		anim.play("idle_down_right")

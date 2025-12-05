@@ -18,6 +18,3 @@ color = Color(0.0638384, 0.916449, 0.0539281, 1)
 
 [node name="player" parent="." instance=ExtResource("1_ajaps")]
 position = Vector2(117, 133)
-
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(403, 300)
