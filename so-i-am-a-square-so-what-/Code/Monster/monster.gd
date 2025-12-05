@@ -8,21 +8,24 @@ var health := 0
 
 var player_body: CharacterBody2D = null
 
-# Movement pause when close to player
-var is_moving := true
-var pause_timer := 0.0
-var pause_duration := 0.4
+# Distance behaviors
+var stopping_distance := 130.0       # Begin circling
+var circle_distance := 90.0          # Perfect orbit
+var separation_distance := 70.0      # Distance to avoid other enemies
 
-# Knockback system
+# Behavior forces
+var separation_force := 250.0        # Push away from other enemies
+var circle_strength := 150.0         # Strength of circling force
+
+# Knockback
 var knockback := Vector2.ZERO
 var knockback_decay := 14.0
 
 
 func _ready():
-	# Health must be set AFTER spawner difficulty scaling
 	health = max_health
 
-	# Locate player
+	# Find player
 	var root = get_tree().root.find_child("player", true, false)
 	if root:
 		for c in root.get_children():
@@ -37,69 +40,107 @@ func _physics_process(delta):
 	if not player_body:
 		return
 
-	# Apply knockback first
+	# --------------------------------------------------
+	# 0. Knockback override
+	# --------------------------------------------------
 	if knockback.length() > 1:
 		velocity = knockback
 		knockback = knockback.move_toward(Vector2.ZERO, knockback_decay)
 		move_and_slide()
 		return
 
-	# Pause behavior
-	if not is_moving:
-		pause_timer -= delta
-		if pause_timer <= 0:
-			is_moving = true
-		return
+	var to_player = player_body.global_position - global_position
+	var distance = to_player.length()
+	var move_dir := Vector2.ZERO
 
-	var direction = (player_body.global_position - global_position).normalized()
-	var distance = global_position.distance_to(player_body.global_position)
-	var stopping_distance := 20.0
+	# --------------------------------------------------
+	# 1. FAR → Chase player
+	# --------------------------------------------------
+	if distance > stopping_distance:
+		move_dir += to_player.normalized()
 
-	if distance <= stopping_distance:
-		velocity = Vector2.ZERO
-		is_moving = false
-		pause_timer = pause_duration
-		set_idle_anim(direction)
-		return
+	# --------------------------------------------------
+	# 2. MID RANGE → Circle player
+	# --------------------------------------------------
+	elif distance > circle_distance:
+		var toward = to_player.normalized()
+		var side = Vector2(-toward.y, toward.x)
 
-	# Chase player
-	velocity = direction * speed
-	move_and_slide()
+		# Each enemy chooses clockwise or counterclockwise once
+		if not has_meta("circle_dir"):
+			set_meta("circle_dir", (1 if randf() > 0.5 else -1))
 
-	if velocity.length() > 0.1:
-		set_move_anim(direction)
+		var circle_dir = get_meta("circle_dir")
+		move_dir += side * circle_strength * circle_dir * delta
+
+	# --------------------------------------------------
+	# 3. TOO CLOSE → Step backward
+	# --------------------------------------------------
 	else:
-		set_idle_anim(direction)
+		move_dir -= to_player.normalized() * 0.4
+
+	# --------------------------------------------------
+	# 4. TRUE GROUP-BASED SEPARATION
+	# --------------------------------------------------
+	var separation := Vector2.ZERO
+
+	for other in get_tree().get_nodes_in_group("enemy"):
+		if other == self:
+			continue
+
+		if not other is Node2D:
+			continue
+
+		var diff = global_position - other.global_position
+		var dist = diff.length()
+
+		if dist < separation_distance and dist > 0:
+			# Weighted repel force
+			separation += diff.normalized() * ((separation_distance - dist) / separation_distance)
+
+	# Apply separation force
+	move_dir += separation * separation_force * delta
+
+	# --------------------------------------------------
+	# 5. APPLY FINAL MOVEMENT
+	# --------------------------------------------------
+	if move_dir.length() > 0.1:
+		move_dir = move_dir.normalized()
+		velocity = move_dir * speed
+		move_and_slide()
+		set_move_anim(move_dir)
+	else:
+		velocity = Vector2.ZERO
+		set_idle_anim(to_player.normalized())
 
 
-# Knockback (called by bullet)
+# =====================================================
+# Knockback
+# =====================================================
 func apply_knockback(force: Vector2):
 	knockback = force
 
 
-# ==========================================================
-#   UNIVERSAL DIFFICULTY SCALING FUNCTION (Spawner uses this)
-# ==========================================================
+# =====================================================
+# Difficulty scaling
+# =====================================================
 func apply_difficulty(speed_bonus: float, hp_bonus: float):
 	speed += speed_bonus
 	max_health += hp_bonus
 	health = max_health
 
 
-# ==========================================================
-#   Animation helpers
-# ==========================================================
+# =====================================================
+# Animation
+# =====================================================
 func set_move_anim(dir: Vector2):
 	var name = get_anim_name(dir, "move")
 	anim.play(name)
-	apply_flip(dir)
+	anim.flip_h = dir.x < 0
 
 func set_idle_anim(dir: Vector2):
 	var name = get_anim_name(dir, "idle")
 	anim.play(name)
-	apply_flip(dir)
-
-func apply_flip(dir: Vector2):
 	anim.flip_h = dir.x < 0
 
 func get_anim_name(dir: Vector2, action: String) -> String:
@@ -115,9 +156,9 @@ func get_anim_name(dir: Vector2, action: String) -> String:
 		return "%s_down_right" % action
 
 
-# ==========================================================
-#   Damage and Death
-# ==========================================================
+# =====================================================
+# Death
+# =====================================================
 func take_damage(amount: int):
 	health -= amount
 	if health <= 0:

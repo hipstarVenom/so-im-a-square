@@ -1,6 +1,6 @@
 extends Area2D
 
-@export var speed := 700
+@export var speed := 600
 @export var lifetime := 1.0
 @export var knockback_force := 120      # Knockback strength
 var direction: Vector2 = Vector2.ZERO
