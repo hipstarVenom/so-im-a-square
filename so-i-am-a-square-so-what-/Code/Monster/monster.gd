@@ -36,7 +36,7 @@ var player_body: CharacterBody2D = null
 # AI Distances
 var stopping_distance := 130.0
 var circle_distance := 90.0
-var dash_trigger_distance := 110.0   # ⭐ Dash if too close
+var dash_trigger_distance := 110.0  
 var separation_distance := 70.0
 
 # AI Forces
