@@ -1,4 +1,4 @@
-# So I’m a Square, So What? 🔲
+# So I’m a Square, So What? {Dropped}
 
 A stylish, hand-drawn top-down shooter where you play as a square with a gun.  
 Enemies spawn. You shoot them. They die.  
