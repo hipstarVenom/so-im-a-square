@@ -1,7 +1,8 @@
-[gd_scene load_steps=32 format=3 uid="uid://dss6vkjmncff3"]
+[gd_scene load_steps=33 format=3 uid="uid://dss6vkjmncff3"]
 
 [ext_resource type="Texture2D" uid="uid://b8ld2jq1qjpur" path="res://Assets/Spritesheets/skeleton.png" id="1_pntxo"]
 [ext_resource type="Script" uid="uid://dt8jac1aob4qw" path="res://Code/skeleton/skeleton.gd" id="1_sbaex"]
+[ext_resource type="PackedScene" uid="uid://c4lhxntjjcqy3" path="res://Scene/gun/bullet.tscn" id="2_im0p2"]
 [ext_resource type="Texture2D" uid="uid://tk20by6ps0rx" path="res://Assets/Spritesheets/deathFX.png" id="2_yqxri"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_go033"]
@@ -311,6 +312,7 @@ radius = 22.0907
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="." groups=["enemy"]]
 script = ExtResource("1_sbaex")
+bullet_scene = ExtResource("2_im0p2")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
 sprite_frames = SubResource("SpriteFrames_pu4su")

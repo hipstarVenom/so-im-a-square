@@ -1,173 +1,177 @@
 extends Node2D
 
+#
+# ============================
+#     EXPORT VARIABLES
+# ============================
+#
+
 @export var monster_scene_1: PackedScene
 @export var monster_scene_2: PackedScene
 @export var player: Node2D
 
-@export var base_spawn_interval := 2.4
-@export var min_spawn_interval := 1.0
-@export var spawn_interval_reduce_rate := 0.005
-
-@export var enemy_speed_increase := 0.5
-@export var enemy_hp_increase := 0.5
-
-@export var group_size_start := 1
-@export var group_size_max := 3
-
-@export var spawn_distance_from_screen := 60.0
-@export var player_safe_distance := 260.0
-@export var enemy_spacing := 120.0
-
-@export var max_enemies_on_screen := 15
-
-var current_spawn_interval := 0.0
-var difficulty_timer := 0.0
-var timer: Timer
+@export var offscreen_margin: float = 180.0
+@export var max_enemies: int = 21       # HARD LIMIT
 
 
-func _ready():
-	current_spawn_interval = base_spawn_interval
+#
+# ============================
+#     INTERNAL STATE
+# ============================
+#
 
-	timer = Timer.new()
-	timer.one_shot = false
-	timer.wait_time = current_spawn_interval
-	timer.autostart = true
-	add_child(timer)
-	timer.timeout.connect(_spawn_group)
-
-
-func _process(delta):
-	difficulty_timer += delta
-
-	current_spawn_interval = max(
-		min_spawn_interval,
-		base_spawn_interval - difficulty_timer * spawn_interval_reduce_rate
-	)
-
-	timer.wait_time = current_spawn_interval
+var next_wave_size: int = 2             # Start at 2
+var max_wave_size: int = 15             # End at 15
+var enemy_count: int = 0
+var camera: Camera2D
 
 
-func _spawn_group():
-	if get_enemy_count() >= max_enemies_on_screen:
+#
+# ============================
+#            READY
+# ============================
+#
+
+func _ready() -> void:
+	await get_tree().process_frame
+
+	camera = _find_camera_in_player(player)
+
+	if camera == null:
+		push_error("Spawner ERROR: Camera2D not found inside Player!")
 		return
 
-	var group_size = clamp(
-		group_size_start + int(difficulty_timer / 20),
-		group_size_start,
-		group_size_max
-	)
-
-	var base_position = pick_spawn_position()
-
-	for i in range(group_size):
-		_spawn_single_enemy(base_position, i)
+	get_tree().node_added.connect(_on_node_added)
+	get_tree().node_removed.connect(_on_node_removed)
 
 
-func _spawn_single_enemy(base_position: Vector2, index: int):
-	var scene = pick_random_scene()
+#
+# ============================
+#     FIND CAMERA 
+# ============================
+#
+
+func _find_camera_in_player(node):
+	if node is Camera2D:
+		return node
+
+	for c in node.get_children():
+		var r = _find_camera_in_player(c)
+		if r != null:
+			return r
+
+	return null
+
+
+#
+# ============================
+#     PROCESS (Wave Logic)
+# ============================
+#
+
+func _process(delta: float) -> void:
+	# Do not spawn next wave until current wave is dead
+	if enemy_count > 0:
+		return
+
+	# If enemies somehow exceed limit, pause waves
+	if enemy_count >= max_enemies:
+		return
+
+	# Spawn next wave
+	_spawn_wave(next_wave_size)
+
+	# Increase wave size (up to 15 max)
+	if next_wave_size < max_wave_size:
+		next_wave_size += 1
+	else:
+		next_wave_size = max_wave_size   # hold at 15
+
+
+#
+# ============================
+#     SPAWN WAVE
+# ============================
+#
+
+func _spawn_wave(count: int):
+	var base_pos = pick_spawn_position()
+
+	for i in range(count):
+		_spawn_enemy(base_pos, i)
+
+
+func _spawn_enemy(base_pos: Vector2, index: int):
+	if enemy_count >= max_enemies:
+		return
+
+	var scene := pick_random_scene()
 	if scene == null:
 		return
 
-	var enemy = scene.instantiate()
+	var enemy: Node2D = scene.instantiate()
 
-	var angle = (float(index) * 0.9) + randf_range(-0.4, 0.4)
-	var offset = Vector2(enemy_spacing, 0).rotated(angle * TAU)
+	# spread pattern
+	var angle := randf_range(-0.6, 0.6) + float(index) * 0.35
+	var offset := Vector2(140, 0).rotated(angle)
 
-	enemy.global_position = base_position + offset
-
-	if enemy.has_method("apply_difficulty"):
-		enemy.apply_difficulty(
-			difficulty_timer * enemy_speed_increase,
-			int(difficulty_timer * enemy_hp_increase)
-		)
+	enemy.global_position = base_pos + offset
 
 	get_tree().current_scene.add_child(enemy)
 
+
+#
+# ============================
+#     RANDOM SCENE PICK
+# ============================
+#
 
 func pick_random_scene() -> PackedScene:
 	return monster_scene_1 if randf() < 0.5 else monster_scene_2
 
 
-# FIXED: pick_spawn_position ALWAYS returns a value
+#
+# ============================
+#     CAMERA-BASED SPAWN
+# ============================
+#
+
 func pick_spawn_position() -> Vector2:
-	var rect = get_viewport().get_visible_rect()
-	var spawn_position := Vector2.ZERO
+	var cam_pos: Vector2 = camera.global_position
+	var viewport_rect := get_viewport().get_visible_rect()
+	var viewport_size := Vector2(viewport_rect.size)
+	var half := viewport_size * 0.5
+	var rect := Rect2(cam_pos - half, viewport_size)
 
-	var attempts := 0
-
-	while attempts < 50:
-		var mode = randi() % 3
-
-		match mode:
-			0: spawn_position = spawn_in_corners(rect)
-			1: spawn_position = spawn_on_edges(rect)
-			2: spawn_position = spawn_off_screen(rect)
-
-		if spawn_position.distance_to(player.global_position) >= player_safe_distance:
-			return spawn_position
-
-		attempts += 1
-
-	# Fallback (center of screen)
-	return rect.position + rect.size * 0.5
-
-
-func spawn_in_corners(rect: Rect2) -> Vector2:
-	var corners = [
-		rect.position,
-		rect.position + Vector2(rect.size.x, 0),
-		rect.position + Vector2(0, rect.size.y),
-		rect.position + rect.size
-	]
-	return corners.pick_random()
-
-
-func spawn_on_edges(rect: Rect2) -> Vector2:
-	var side = randi() % 4
-
-	match side:
-		0: return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x), rect.position.y)
-		1: return Vector2(randf_range(rect.position.x, rect.position.x + rect.size.x), rect.position.y + rect.size.y)
-		2: return Vector2(rect.position.x, randf_range(rect.position.y, rect.position.y + rect.size.y))
-		3: return Vector2(rect.position.x + rect.size.x, randf_range(rect.position.y, rect.position.y + rect.size.y))
-
-	return rect.position  # fallback
-
-
-func spawn_off_screen(rect: Rect2) -> Vector2:
-	var side = randi() % 4
-	var offset = spawn_distance_from_screen
+	var side := randi() % 4
 
 	match side:
 		0:
-			return Vector2(
-				randf_range(rect.position.x, rect.position.x + rect.size.x),
-				rect.position.y - offset
-			)
+			return Vector2(randf_range(rect.position.x, rect.end.x),
+				rect.position.y - offscreen_margin)
 		1:
-			return Vector2(
-				randf_range(rect.position.x, rect.position.x + rect.size.x),
-				rect.position.y + rect.size.y + offset
-			)
+			return Vector2(randf_range(rect.position.x, rect.end.x),
+				rect.end.y + offscreen_margin)
 		2:
-			return Vector2(
-				rect.position.x - offset,
-				randf_range(rect.position.y, rect.position.y + rect.size.y)
-			)
+			return Vector2(rect.position.x - offscreen_margin,
+				randf_range(rect.position.y, rect.end.y))
 		3:
-			return Vector2(
-				rect.position.x + rect.size.x + offset,
-				randf_range(rect.position.y, rect.position.y + rect.size.y)
-			)
+			return Vector2(rect.end.x + offscreen_margin,
+				randf_range(rect.position.y, rect.end.y))
 
-	return rect.position  # fallback
+	return cam_pos
 
 
-func get_enemy_count() -> int:
-	var count := 0
+#
+# ============================
+#     ENEMY COUNT (FAST O(1))
+# ============================
+#
 
-	for child in get_tree().current_scene.get_children():
-		if child.is_in_group("enemy"):
-			count += 1
+func _on_node_added(node):
+	if node.is_in_group("enemy"):
+		enemy_count += 1
 
-	return count
+func _on_node_removed(node):
+	if node.is_in_group("enemy"):
+		enemy_count = max(0, enemy_count - 1)

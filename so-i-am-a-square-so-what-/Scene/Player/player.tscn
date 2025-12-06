@@ -1,8 +1,10 @@
-[gd_scene load_steps=46 format=3 uid="uid://cmihqqysnk21k"]
+[gd_scene load_steps=48 format=3 uid="uid://cmihqqysnk21k"]
 
 [ext_resource type="Texture2D" uid="uid://qr4goguxuf3m" path="res://Assets/Spritesheets/hero.png" id="1_67a6e"]
 [ext_resource type="Script" uid="uid://4apjupuxarol" path="res://Code/Player/player.gd" id="1_yic5t"]
+[ext_resource type="PackedScene" uid="uid://buh66b3cx8ne2" path="res://Scene/Player/after_image.tscn" id="3_88wa8"]
 [ext_resource type="PackedScene" uid="uid://dr160ebgdjwh1" path="res://Scene/gun/gun.tscn" id="3_uuj77"]
+[ext_resource type="Script" uid="uid://b7kyebs0mrdrx" path="res://Scene/Player/Camera.gd" id="4_g0r71"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2udht"]
 atlas = ExtResource("1_67a6e")
@@ -345,6 +347,7 @@ radius = 23.0217
 [node name="CharacterBody2D" type="CharacterBody2D" parent="." groups=["player"]]
 script = ExtResource("1_yic5t")
 gun_scene = ExtResource("3_uuj77")
+afterimage_scene = ExtResource("3_88wa8")
 
 [node name="down" type="Marker2D" parent="CharacterBody2D"]
 position = Vector2(0, 36)
@@ -370,3 +373,6 @@ centered = false
 shape = SubResource("CircleShape2D_67a6e")
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+position_smoothing_enabled = true
+position_smoothing_speed = 5.12
+script = ExtResource("4_g0r71")

@@ -11,10 +11,10 @@ monster_scene_1 = ExtResource("2_c5csi")
 monster_scene_2 = ExtResource("3_pw3jx")
 player = NodePath("player")
 
-[node name="ColorRect" type="ColorRect" parent="."]
-offset_right = 800.0
-offset_bottom = 599.0
+[node name="MapArea" type="ColorRect" parent="."]
+offset_right = 7853.0
+offset_bottom = 6234.0
 color = Color(0.0638384, 0.916449, 0.0539281, 1)
 
 [node name="player" parent="." instance=ExtResource("1_ajaps")]
-position = Vector2(117, 133)
+position = Vector2(399, 299)
